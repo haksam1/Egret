@@ -1,0 +1,111 @@
+# Documentation: Using the API Service in a React Component
+ 
+This guide explains how to use the `apiService` in a React component to make API requests to your Spring Boot backend.
+ 
+## Overview
+ 
+The `apiService` provides several methods for sending HTTP requests (GET, POST, etc.) with or without authentication tokens. It dynamically sets the base URL based on the environment (local or deployed).
+ 
+## Setup
+ 
+1. **Import the `apiService`:**
+ 
+   ```typescript
+   import apiService from '../services/apiService';
+   ```
+ 
+2. **Use the `apiService` in your component:**
+ 
+   ```typescript
+   const MyComponent = () => {
+     const { sendPostToServer, sendGetToServer } = apiService();
+ 
+     // Example: Sending a POST request
+     const handleSubmit = async () => {
+       try {
+         const data = await sendPostToServer('/auth/login', { email: 'user@example.com', password: 'password' });
+         console.log(data);
+       } catch (error) {
+         console.error(error);
+       }
+     };
+ 
+     // Example: Sending a GET request
+     const fetchData = async () => {
+       try {
+         const data = await sendGetToServer('/users/me');
+         console.log(data);
+       } catch (error) {
+         console.error(error);
+       }
+     };
+ 
+     return (
+       <div>
+         <button onClick={handleSubmit}>Login</button>
+         <button onClick={fetchData}>Fetch User Data</button>
+       </div>
+     );
+   };
+   ```
+ 
+## Available Methods
+ 
+The `apiService` provides the following methods:
+ 
+- **`sendPostToServer(url, data)`**: Sends a POST request with a token.
+- **`sendPdfPostToServer(url, data)`**: Sends a POST request for PDFs with a token.
+- **`sendPostToServerPromise(url, data)`**: Sends a POST request with a token (similar to `sendPostToServer`).
+- **`sendPostToServerPdf(url, data)`**: Sends a POST request for PDFs with a token.
+- **`sendGetToServer(url)`**: Sends a GET request with a token.
+- **`sendPostToServerMult(url, data)`**: Sends a POST request with multipart/form-data and a token.
+- **`sendPostToServerMultWithoutToken(url, data)`**: Sends a POST request with multipart/form-data without a token.
+- **`sendPostToServerWithOutToken(url, data)`**: Sends a POST request without a token.
+- **`sendPostToServerPdfWithoutToken(url, data)`**: Sends a POST request for PDFs without a token.
+ 
+## Example: Full Component
+ 
+Here's a complete example of a React component using the `apiService`:
+ 
+```typescript
+import React from 'react';
+import apiService from '../services/apiService';
+ 
+const MyComponent = () => {
+  const { sendPostToServer, sendGetToServer } = apiService();
+ 
+  const handleSubmit = async () => {
+    try {
+      const data = await sendPostToServer('/auth/login', { email: 'user@example.com', password: 'password' });
+      console.log(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+ 
+  const fetchData = async () => {
+    try {
+      const data = await sendGetToServer('/users/me');
+      console.log(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+ 
+  return (
+    <div>
+      <button onClick={handleSubmit}>Login</button>
+      <button onClick={fetchData}>Fetch User Data</button>
+    </div>
+  );
+};
+ 
+export default MyComponent;
+```
+ 
+## Notes
+ 
+- **Error Handling:** Always wrap API calls in `try-catch` blocks to handle errors gracefully.
+- **Token Management:** The `apiService` automatically includes the token in requests if it is available in `localStorage`.
+- **Dynamic URL:** The `SERVER_URL` is set dynamically based on the environment, so you don't need to change it manually when deploying.
+ 
