@@ -54,8 +54,8 @@ const AdminBusinesses: React.FC = () => {
             }));
         }
         setBusinesses(list);
-      } catch (err) {
-        toast.error('Failed to load businesses');
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to load businesses');
         setBusinesses([]);
       } finally {
         setLoading(false);

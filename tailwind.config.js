@@ -12,7 +12,10 @@ export default {
           secondary: '#757575',
           hint: '#9e9e9e'
         },
-        background: '#ffffff'
+        background: '#ffffff',
+        'egret-green': '#7ED321',
+        'egret-blue-dark': '#0079C1',
+        'egret-blue-light': '#00AEEF',
       }
     },
   },

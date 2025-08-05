@@ -27,7 +27,7 @@ const AdminTransactions: React.FC = () => {
     const fetchTransactions = async () => {
       try {
         setLoading(true);
-        const response = await apiService().sendPostToServer('admin/transactions', {});
+        const response = await apiService().sendPostToServer('admin/transactions', {}) as { transactions: Transaction[] };
         
         // More robust data validation
         if (!response) {
@@ -35,7 +35,7 @@ const AdminTransactions: React.FC = () => {
         }
 
         const transactionsData = response.transactions ?? [];
-        
+
         if (!Array.isArray(transactionsData)) {
           console.warn('Unexpected transactions data format:', transactionsData);
           throw new Error('Invalid transactions data format');
@@ -101,10 +101,10 @@ const AdminTransactions: React.FC = () => {
         URL.revokeObjectURL(url);
       }, 100);
 
-      toast.success("Transactions exported successfully");
+      toast.success((response as any)?.message || "Transactions exported successfully");
     } catch (error) {
       console.error('Error exporting transactions:', error);
-      toast.error(`Failed to export transactions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error((error as any)?.message || `Failed to export transactions: ${(error as any)?.message || 'Unknown error'}`);
     } finally {
       setExportLoading(false);
     }

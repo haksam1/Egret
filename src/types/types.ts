@@ -160,3 +160,107 @@ export type ApiResponse<T> = {
   returnObject?: T;
   [key: string]: any;
 };
+
+// Business Registration Types
+export type BankAccount = {
+  accountType: string | number | readonly string[] | undefined;
+  id?: string;
+  bankId: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  branch: string;
+  isPrimary: boolean;
+};
+
+export type Contact = {
+  position: string;
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  alternatePhone?: string;
+  physicalAddress: string;
+  isPrimary: boolean;
+  parish: string;
+  parishId: string;
+  subCounty: string;
+  subCountyId: string;
+  county: string;
+  countyId: string;
+  district: string;
+  districtId: string;
+  region: string;
+  regionId: string;
+  // removed village and country
+  parishSearch?: string;
+  parishSearchResults?: any[];
+};
+
+export type BusinessRegistrationForm = {
+  amenities?: string[];
+  village?: string;
+  staff?: any[];
+  // 1. Basic Information
+  legalName: string;
+  tradingName: string;
+  parentInstitutionName?: string;
+  tin?: string;
+  registrationDate?: string;
+  websiteUrl?: string;
+  registrationType?: string;
+  parentInstitution?: string;
+  parentInstitutionId?: string;
+  branchType?: string;
+  businessName?: string;
+  contactPhone?: string;
+  emailAddress?: string;
+  districtOrCity?: string;
+  registrationAuthority?: string;
+  registrationBody?: string;
+  industrySector?: string;
+  industrySubSector?: string;
+  subSectorType?: string;
+  subSectorScale?: string;
+  // 2. Business Classification
+  businessType: string;
+  businessSubType?: string;
+  industryType?: string;
+  subCategory?: string;
+  industrySubType?: string;
+  businessCategory?: string;
+  sector?: string;
+  subSector?: string;
+  industryCategory?: string;
+  operationalModel?: string;
+  // 3. Banking Information
+  bankAccounts: BankAccount[];
+  // 4. Contact Information
+  contacts: Contact[];
+  // 5. Location Information
+  country?: string;
+  parish?: string;
+  parishId?: string;
+  // country and physicalAddress already defined above, remove duplicates
+  parishName?: string;
+  subCounty?: string;
+  subCountyId?: string;
+  subCountyName?: string;
+  county?: string;
+  countyId?: string;
+  countyName?: string;
+  district?: string;
+  districtId?: string;
+  districtName?: string;
+  region?: string;
+  regionId?: string;
+  regionName?: string;
+  physicalAddress?: string;
+  // 6. Review & Submit
+  agreeTo?: boolean;
+  businessNameCert?: any;
+  tradeLicense?: any;
+  taxCert?: any;
+  passportPhoto?: any;
+  ninId?: any;
+};

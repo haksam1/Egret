@@ -1,193 +1,324 @@
-import React, { useState } from 'react';
+import { BankAccount } from '../../types/types';
+import { useState, useEffect } from 'react';
+import apiService from '../../services/apiService';
 
-const accountTypes = [
-  { value: 'SAVINGS', label: 'Savings Account' },
-  { value: 'CHECKING', label: 'Checking Account' },
-  { value: 'BUSINESS', label: 'Business Account' },
-  { value: 'FIXED_DEPOSIT', label: 'Fixed Deposit' },
-  { value: 'CURRENT', label: 'Current Account' },
-];
-
-// Uganda banks with their major branches
-const ugandaBanksWithBranches = {
-  'Centenary Bank': ['Kampala Road', 'Garden City', 'Nakawa', 'Ntinda', 'Makerere'],
-  'Stanbic Bank Uganda': ['Main Branch', 'Garden City', 'Acacia Mall', 'Oasis Mall', 'Equatorial Mall'],
-  'Standard Chartered Uganda': ['Main Branch', 'Garden City', 'Acacia Mall', 'Kololo', 'Nakawa'],
-  'Absa Bank Uganda': ['Main Branch', 'Garden City', 'Acacia Mall', 'Ntinda', 'Bugolobi'],
-  'DFCU Bank': ['Main Branch', 'Garden City', 'Acacia Mall', 'Nakawa', 'Ntinda'],
-  'Bank of Africa Uganda': ['Main Branch', 'Garden City', 'Acacia Mall', 'Ntinda', 'Bugolobi'],
-  'Equity Bank Uganda': ['Main Branch', 'Garden City', 'Acacia Mall', 'Nakawa', 'Ntinda'],
-  'Ecobank Uganda': ['Main Branch', 'Garden City', 'Acacia Mall', 'Nakawa', 'Ntinda'],
-  'Housing Finance Bank': ['Main Branch', 'Garden City', 'Acacia Mall', 'Nakawa', 'Ntinda'],
-  'NC Bank Uganda': ['Main Branch', 'Garden City', 'Acacia Mall', 'Nakawa', 'Ntinda']
-};
-
-const BankStep: React.FC<{
-  values: any;
-  onChange: (field: string, value: any) => void;
+interface BankStepProps {
+  bankAccounts: BankAccount[];
+  onChange: (accounts: BankAccount[]) => void;
   errors: { [key: string]: string };
   disabled?: boolean;
-}> = ({ values, onChange, errors, disabled }) => {
-  const [branches, setBranches] = useState<string[]>([]);
+}
 
-  const handleBankChange = (bankName: string) => {
-    onChange('bankName', bankName);
-    // Reset branch when bank changes
-    onChange('bankBranch', '');
-    // Set branches for the selected bank
-    setBranches(ugandaBanksWithBranches[bankName as keyof typeof ugandaBanksWithBranches] || []);
+
+// Banks and branches will be fetched from the backend
+
+
+// Account types will be fetched from the backend
+
+const BankStep: React.FC<BankStepProps> = ({ bankAccounts, onChange, errors = {}, disabled }) => {
+  // Ensure at least one account is present on mount
+  useEffect(() => {
+    if (!bankAccounts || bankAccounts.length === 0) {
+      onChange([
+        {
+          id: '',
+          bankId: '',
+          bankName: '',
+          accountNumber: '',
+          accountName: '',
+          branch: '',
+          accountType: '',
+          isPrimary: true,
+        },
+      ]);
+    }
+  }, []); // Only run on mount
+  const [banks, setBanks] = useState<{ id: string; name: string; branches: string[] }[]>([]);
+  const [, setAvailableBranches] = useState<{[key: string]: string[]}>({});
+  const [accountTypes, setAccountTypes] = useState<{ value: string; label: string }[]>([]);
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const api = apiService();
+        const res = await api.sendPostToServer('businesses/banks', {});
+        let arr: any[] = [];
+        if (Array.isArray(res)) {
+          arr = res;
+        } else if (res && typeof res === 'object' && 'data' in res && Array.isArray((res as any).data)) {
+          arr = (res as any).data;
+        }
+        // Ensure branches is always an array of strings
+        arr = arr.map((bank: any) => {
+          let branches = bank.branches;
+          if (typeof branches === 'string') {
+            try {
+              let parsed = JSON.parse(branches);
+              if (typeof parsed === 'string') {
+                parsed = JSON.parse(parsed);
+              }
+              if (Array.isArray(parsed)) {
+                branches = parsed;
+              } else {
+                branches = [branches];
+              }
+            } catch {
+              branches = [branches];
+            }
+          }
+          if (!Array.isArray(branches)) {
+            branches = [branches];
+          }
+          branches = branches.map((b: any) => String(b));
+          return { ...bank, id: String(bank.id), branches };
+        });
+        setBanks(arr);
+        // Set available branches map
+        const branchesMap: {[key: string]: string[]} = {};
+        arr.forEach((bank: any) => {
+          branchesMap[bank.id] = bank.branches;
+        });
+        setAvailableBranches(branchesMap);
+      } catch (e) {
+        setBanks([]);
+        setAvailableBranches({});
+      }
+    };
+
+    const fetchAccountTypes = async () => {
+      try {
+        const api = apiService();
+        const res = await api.sendPostToServer('businesses/account-types', {});
+        let arr: any[] = [];
+        if (Array.isArray(res)) {
+          arr = res;
+        } else if (res && typeof res === 'object' && 'data' in res && Array.isArray((res as any).data)) {
+          arr = (res as any).data;
+        }
+        arr = arr.map((type: any) => ({ value: type.name || type, label: type.name || type }));
+        setAccountTypes(arr);
+      } catch (e) {
+        setAccountTypes([]);
+      }
+    };
+
+    fetchBanks();
+    fetchAccountTypes();
+  }, []);
+
+  const handleAccountChange = (idx: number, field: keyof BankAccount, value: string | boolean) => {
+    const updated = [...bankAccounts];
+    updated[idx] = { ...updated[idx], [field]: value };
+    onChange(updated);
+  };
+
+  const removeAccount = (idx: number) => {
+    const updated = bankAccounts.filter((_, i) => i !== idx);
+    onChange(updated);
+  };
+
+  const addAccount = () => {
+    onChange([
+      ...bankAccounts,
+      {
+        id: '',
+        bankId: '',
+        bankName: '',
+        accountNumber: '',
+        accountName: '',
+        branch: '',
+        accountType: '',
+        isPrimary: bankAccounts.length === 0, // Set as primary if first account
+      },
+    ]);
+  };
+
+
+  const handleBankChange = (idx: number, bankId: string) => {
+    const selectedBank = banks.find(bank => bank.id === bankId);
+    const updated = [...bankAccounts];
+    updated[idx] = {
+      ...updated[idx],
+      bankId,
+      bankName: selectedBank?.name || '',
+      branch: '' // Reset branch when bank changes
+    };
+    onChange(updated);
+  };
+
+  const handlePrimaryChange = (idx: number, isPrimary: boolean) => {
+    const updated = bankAccounts.map((account, i) => ({
+      ...account,
+      isPrimary: i === idx ? isPrimary : false
+    }));
+    onChange(updated);
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">Bank Information</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="mb-4">
-          <label htmlFor="bankName" className="block text-sm font-medium text-gray-700 mb-1">
-            Bank Name *
-          </label>
-          <select
-            id="bankName"
-            name="bankName"
-            value={values.bankName}
-            onChange={(e) => handleBankChange(e.target.value)}
-            className={`w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.bankName ? 'border-red-500' : 'border-gray-300'
-            }`}
-            aria-describedby="bankName-error"
-            disabled={disabled}
-          >
-            <option value="">Select bank</option>
-            {Object.keys(ugandaBanksWithBranches).map((bank) => (
-              <option key={bank} value={bank}>
-                {bank}
-              </option>
-            ))}
-          </select>
-          {errors.bankName && (
-            <p id="bankName-error" className="mt-1 text-sm text-red-600">
-              {errors.bankName}
-            </p>
-          )}
-        </div>
-        <div className="mb-4">
-          <label htmlFor="bankBranch" className="block text-sm font-medium text-gray-700 mb-1">
-            Bank Branch *
-          </label>
-          {values.bankName ? (
-            <select
-              id="bankBranch"
-              name="bankBranch"
-              value={values.bankBranch}
-              onChange={(e) => onChange('bankBranch', e.target.value)}
-              className={`w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.bankBranch ? 'border-red-500' : 'border-gray-300'
-              }`}
-              aria-describedby="bankBranch-error"
-              disabled={disabled}
-            >
-              <option value="">Select branch</option>
-              {branches.map((branch) => (
-                <option key={branch} value={branch}>
-                  {branch}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type="text"
-              value={values.bankBranch}
-              disabled
-              className="w-full p-2.5 border border-gray-300 rounded-md bg-gray-100"
-              placeholder="Select bank first"
-            />
-          )}
-          {errors.bankBranch && (
-            <p id="bankBranch-error" className="mt-1 text-sm text-red-600">
-              {errors.bankBranch}
-            </p>
-          )}
-        </div>
-        <div className="mb-4">
-          <label htmlFor="accountName" className="block text-sm font-medium text-gray-700 mb-1">
-            Account Name *
-          </label>
-          <input
-            type="text"
-            id="accountName"
-            name="accountName"
-            value={values.accountName}
-            onChange={(e) => onChange('accountName', e.target.value)}
-            className={`w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.accountName ? 'border-red-500' : 'border-gray-300'
-            }`}
-            aria-describedby="accountName-error"
-            disabled={disabled}
-            placeholder="Enter account name"
-          />
-          {errors.accountName && (
-            <p id="accountName-error" className="mt-1 text-sm text-red-600">
-              {errors.accountName}
-            </p>
-          )}
-        </div>
-        <div className="mb-4">
-          <label htmlFor="accountNumber" className="block text-sm font-medium text-gray-700 mb-1">
-            Account Number *
-          </label>
-          <input
-            type="text"
-            id="accountNumber"
-            name="accountNumber"
-            value={values.accountNumber}
-            onChange={(e) => onChange('accountNumber', e.target.value)}
-            className={`w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.accountNumber ? 'border-red-500' : 'border-gray-300'
-            }`}
-            aria-describedby="accountNumber-error"
-            disabled={disabled}
-            maxLength={50}
-            autoComplete="off"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder="Enter account number"
-          />
-          {errors.accountNumber && (
-            <p id="accountNumber-error" className="mt-1 text-sm text-red-600">
-              {errors.accountNumber}
-            </p>
-          )}
-        </div>
-        <div className="mb-4">
-          <label htmlFor="accountType" className="block text-sm font-medium text-gray-700 mb-1">
-            Account Type *
-          </label>
-          <select
-            id="accountType"
-            name="accountType"
-            value={values.accountType}
-            onChange={(e) => onChange('accountType', e.target.value)}
-            className={`w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.accountType ? 'border-red-500' : 'border-gray-300'
-            }`}
-            aria-describedby="accountType-error"
-            disabled={disabled}
-          >
-            <option value="">Select account type</option>
-            {accountTypes.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-          {errors.accountType && (
-            <p id="accountType-error" className="mt-1 text-sm text-red-600">
-              {errors.accountType}
-            </p>
-          )}
-        </div>
+    <section className="bg-white p-6 rounded-lg shadow">
+      <h2 className="text-xl font-semibold mb-4">Bank Information</h2>
+      <div className="space-y-6">
+        {bankAccounts.map((account, idx) => (
+          <div key={idx} className="border-b pb-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Bank #{idx + 1}</h3>
+              {bankAccounts.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeAccount(idx)}
+                  disabled={disabled}
+                  className="text-red-500 hover:text-red-700 text-sm"
+                >
+                  Remove Bank
+                </button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 mb-2">Bank Name *</label>
+                <select
+                  value={account.bankId}
+                  onChange={(e) => handleBankChange(idx, e.target.value)}
+                  className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${(errors[`bankAccounts.${idx}.bankId`] || (!account.bankId && Object.keys(errors).length > 0)) ? 'border-red-500' : 'border-gray-300'}`}
+                  data-error={`bankAccounts.${idx}.bankId`}
+                  required
+                  disabled={disabled}
+                >
+                  <option value="">Select Bank</option>
+                  {banks.map(bank => (
+                    <option key={bank.id} value={bank.id}>{bank.name}</option>
+                  ))}
+                </select>
+                {/* Strict: Only show error for required or filled optional fields */}
+                {(errors[`bankAccounts.${idx}.bankId`] && account.bankId) && (
+                  <p className="text-red-500 text-sm mt-1">{errors[`bankAccounts.${idx}.bankId`]}</p>
+                )}
+                {(!account.bankId && Object.keys(errors).length > 0) && (
+                  <p className="text-red-500 text-sm mt-1">Bank name is required</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">Account Name *</label>
+                <input
+                  value={account.accountName}
+                  onChange={e => {
+                    // Allow only letters, spaces, and basic punctuation
+                    const value = e.target.value.replace(/[^a-zA-Z\s.'-]/g, '');
+                    handleAccountChange(idx, 'accountName', value);
+                  }}
+                  placeholder="Enter Account Name"
+                  className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${(errors[`bankAccounts.${idx}.accountName`] || (!account.accountName && Object.keys(errors).length > 0)) ? 'border-red-500' : 'border-gray-300'}`}
+                  data-error={`bankAccounts.${idx}.accountName`}
+                  required
+                  disabled={disabled}
+                />
+                {(errors[`bankAccounts.${idx}.accountName`] && account.accountName) && (
+                  <p className="text-red-500 text-sm mt-1">{errors[`bankAccounts.${idx}.accountName`]}</p>
+                )}
+                {(!account.accountName && Object.keys(errors).length > 0) && (
+                  <p className="text-red-500 text-sm mt-1">Account name is required</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">Bank Branch *</label>
+                <input
+                  type="text"
+                  value={account.branch}
+                  onChange={e => handleAccountChange(idx, 'branch', e.target.value)}
+                  placeholder="Enter Bank Branch"
+                  className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${(errors[`bankAccounts.${idx}.branch`] || (!account.branch && Object.keys(errors).length > 0)) ? 'border-red-500' : 'border-gray-300'}`}
+                  data-error={`bankAccounts.${idx}.branch`}
+                  required
+                  disabled={disabled}
+                />
+                {(errors[`bankAccounts.${idx}.branch`] && account.branch) && (
+                  <p className="text-red-500 text-sm mt-1">{errors[`bankAccounts.${idx}.branch`]}</p>
+                )}
+                {(!account.branch && Object.keys(errors).length > 0) && (
+                  <p className="text-red-500 text-sm mt-1">Bank branch is required</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">Account Number *</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={account.accountNumber}
+                  onChange={e => {
+                    // Allow only numbers
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    handleAccountChange(idx, 'accountNumber', value);
+                  }}
+                  placeholder="Enter Account Number"
+                  className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${(errors[`bankAccounts.${idx}.accountNumber`] || (!account.accountNumber && Object.keys(errors).length > 0)) ? 'border-red-500' : 'border-gray-300'}`}
+                  data-error={`bankAccounts.${idx}.accountNumber`}
+                  required
+                  disabled={disabled}
+                />
+                {(errors[`bankAccounts.${idx}.accountNumber`] && account.accountNumber) && (
+                  <p className="text-red-500 text-sm mt-1">{errors[`bankAccounts.${idx}.accountNumber`]}</p>
+                )}
+                {(!account.accountNumber && Object.keys(errors).length > 0) && (
+                  <p className="text-red-500 text-sm mt-1">Account number is required</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">Account Type *</label>
+                <select
+                  value={account.accountType}
+                  onChange={e => handleAccountChange(idx, 'accountType', e.target.value)}
+                  className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${(errors[`bankAccounts.${idx}.accountType`] || (!account.accountType && Object.keys(errors).length > 0)) ? 'border-red-500' : 'border-gray-300'}`}
+                  data-error={`bankAccounts.${idx}.accountType`}
+                  required
+                  disabled={disabled}
+                >
+                  <option value="">Select Account Type</option>
+                  {accountTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
+                </select>
+                {(errors[`bankAccounts.${idx}.accountType`] && account.accountType) && (
+                  <p className="text-red-500 text-sm mt-1">{errors[`bankAccounts.${idx}.accountType`]}</p>
+                )}
+                {(!account.accountType && Object.keys(errors).length > 0) && (
+                  <p className="text-red-500 text-sm mt-1">Account type is required</p>
+                )}
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`primary-${idx}`}
+                  checked={account.isPrimary}
+                  onChange={e => handlePrimaryChange(idx, e.target.checked)}
+                  data-error={idx === 0 ? 'primaryBank' : undefined}
+                  disabled={disabled}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+                <label htmlFor={`primary-${idx}`} className="ml-2 block text-gray-700">
+                  Primary Bank Account
+                </label>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={addAccount}
+          disabled={disabled}
+          className="ml-auto flex items-center px-6 py-2 rounded-lg text-white bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 disabled:opacity-70 transition-colors"
+        >
+          Add Bank Account
+        </button>
       </div>
-    </div>
+    </section>
   );
 };
 

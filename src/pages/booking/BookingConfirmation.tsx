@@ -54,9 +54,10 @@ interface Booking {
   };
 }
 
-const BookingConfirmation: React.FC = () => {
+const BookingConfirmation: React.FC<{}> = (): JSX.Element => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [toast] = react-hot-toast();
   const booking: Booking = location.state?.booking || {
     id: 'RES-123456',
     type: 'hotel',
@@ -196,6 +197,10 @@ const BookingConfirmation: React.FC = () => {
       currency: 'USD',
     }).format(amount);
   };
+
+  React.useEffect(() => {
+    toast({ title: "Booking Confirmed!", description: "Your booking is complete.", variant: "success" });
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

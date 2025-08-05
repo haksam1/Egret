@@ -136,7 +136,7 @@ const AdminDashboard: React.FC = () => {
           },
           {
             name: 'Total Revenue',
-            value: `$${mappedData.totalrevenue.toLocaleString()}`,
+            value: `${mappedData.totalrevenue.toLocaleString()}`,
             icon: CreditCard,
             change: '0%',
             changeType: 'positive'
@@ -234,6 +234,7 @@ const AdminDashboard: React.FC = () => {
     { name: 'Bookings', link: '/admin/bookings', icon: FileText },
     { name: 'Transactions', link: '/admin/transactions', icon: CreditCard },
     { name: 'Approvals', link: '/admin/approvals', icon: Shield },
+    { name: 'Banks', link: '/admin/banks', icon: CreditCard },
     { name: 'Settings', link: '/admin/settings', icon: Settings },
   ];
   // Show both Business Approvals and Listing Approvals in Pending Actions

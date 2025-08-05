@@ -40,17 +40,17 @@ const AdminUsers: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiService().sendPostToServer('admin/users', {});
+      const response = await apiService().sendPostToServer('admin/users', {}) as { data: User[], message?: string };
 
       if (!Array.isArray(response.data)) {
-        throw new Error('Invalid response format from server');
+        throw new Error(response.message || 'Invalid response format from server');
       }
 
       setUsers(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching users:', error);
-      setError('Failed to load users. Please try again.');
-      toast.error('Failed to load users');
+      setError(error?.message || 'Failed to load users. Please try again.');
+      toast.error(error?.message || 'Failed to load users');
       setUsers([]);
     } finally {
       setLoading(false);
@@ -72,13 +72,12 @@ const AdminUsers: React.FC = () => {
 
     try {
       setActionLoading(`delete-${userId}`);
-      await apiService().sendPostToServer(`admin/delete`, { id: userId });
-
+      const response = await apiService().sendPostToServer(`admin/delete`, { id: userId }) as { message?: string };
       setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
-      toast.success("User deleted successfully");
-    } catch (error) {
+      toast.success(response?.message || "User deleted successfully");
+    } catch (error: any) {
       console.error('Error deleting user:', error);
-      toast.error("Failed to delete user");
+      toast.error(error?.message || "Failed to delete user");
     } finally {
       setActionLoading(null);
     }
@@ -87,8 +86,7 @@ const AdminUsers: React.FC = () => {
   const handleStatusChange = async (userId: string, newStatus: 'active' | 'suspended') => {
     try {
       setActionLoading(`status-${userId}`);
-      await apiService().sendPostToServer(`admin/status`, { id: userId, status: newStatus });
-
+      const response = await apiService().sendPostToServer(`admin/status`, { id: userId, status: newStatus }) as { message?: string };
       setUsers(prevUsers =>
         prevUsers.map(user =>
           user.id === userId ? { 
@@ -98,11 +96,10 @@ const AdminUsers: React.FC = () => {
           } : user
         )
       );
-
-      toast.success(`User ${newStatus === 'active' ? 'activated' : 'suspended'} successfully`);
-    } catch (error) {
+      toast.success(response?.message || `User ${newStatus === 'active' ? 'activated' : 'suspended'} successfully`);
+    } catch (error: any) {
       console.error('Error updating user status:', error);
-      toast.error(`Failed to ${newStatus === 'active' ? 'activate' : 'suspend'} user`);
+      toast.error(error?.message || `Failed to ${newStatus === 'active' ? 'activate' : 'suspend'} user`);
     } finally {
       setActionLoading(null);
     }

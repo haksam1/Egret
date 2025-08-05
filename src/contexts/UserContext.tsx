@@ -19,6 +19,7 @@ interface User {
   postalCode: string;
   businessId?: string;
   role: 'USER' | 'ADMIN';
+  isBusiness?: boolean;
 }
 
 interface UserContextType {

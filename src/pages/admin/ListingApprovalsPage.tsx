@@ -49,11 +49,11 @@ const ListingApprovalsPage: React.FC = () => {
   const handleApprove = async (id: string) => {
     try {
       setActionLoading(`approve-${id}`);
-      await apiService().sendPostToServer('admin/listings/approve', { id });
+      const response = await apiService().sendPostToServer('admin/listings/approve', { id }) as { message?: string };
       setListings(prev => prev.map(l => l.id === id ? { ...l, status: 'approved' } : l));
-      toast.success('Listing approved successfully');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to approve listing');
+      toast.success(response?.message || 'Listing approved successfully');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to approve listing');
     } finally {
       setActionLoading(null);
     }
@@ -62,11 +62,11 @@ const ListingApprovalsPage: React.FC = () => {
   const handleReject = async (id: string) => {
     try {
       setActionLoading(`reject-${id}`);
-      await apiService().sendPostToServer('admin/listings/reject', { id });
+      const response = await apiService().sendPostToServer('admin/listings/reject', { id }) as { message?: string };
       setListings(prev => prev.map(l => l.id === id ? { ...l, status: 'rejected' } : l));
-      toast.success('Listing rejected successfully');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to reject listing');
+      toast.success(response?.message || 'Listing rejected successfully');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to reject listing');
     } finally {
       setActionLoading(null);
     }

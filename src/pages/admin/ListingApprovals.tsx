@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiService from '../../services/apiService';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface Listing {
   id: string;
@@ -36,10 +37,13 @@ const ListingApprovals: React.FC = () => {
             created_at: l.created_at || l.createdAt,
             last_updated_at: l.last_updated_at || l.lastUpdatedAt,
           }));
+        } else {
+          toast.error('Failed to load pending listings');
         }
         setListings(list);
       } catch (err) {
         setListings([]);
+        toast.error('Failed to load pending listings');
       } finally {
         setLoading(false);
       }

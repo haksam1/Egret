@@ -65,16 +65,16 @@ const BusinessApprovals: React.FC = () => {
   const handleApprove = async (id: string) => {
     try {
       setActionLoading(`approve-${id}`);
-      await apiService().sendPostToServer(`admin/approve`, { id });
+      const response = await apiService().sendPostToServer(`admin/approve`, { id }) as { message?: string };
       setBusinesses(prevBusinesses => 
         prevBusinesses.map(b =>
           b.id === id ? { ...b, status: 'approved' } : b
         )
       );
-      toast.success("Business approved successfully");
-    } catch (err) {
+      toast.success(response && typeof response.message === 'string' ? response.message : "Business approved successfully");
+    } catch (err: any) {
       console.error('Error approving business:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to approve business');
+      toast.error(err?.message || 'Failed to approve business');
     } finally {
       setActionLoading(null);
     }
@@ -83,16 +83,16 @@ const BusinessApprovals: React.FC = () => {
   const handleReject = async (id: string) => {
     try {
       setActionLoading(`reject-${id}`);
-      await apiService().sendPostToServer(`admin/reject`, { id });
+      const response = await apiService().sendPostToServer(`admin/reject`, { id }) as { message?: string };
       setBusinesses(prevBusinesses => 
         prevBusinesses.map(b =>
           b.id === id ? { ...b, status: 'rejected' } : b
         )
       );
-      toast.success("Business rejected successfully");
-    } catch (err) {
+      toast.success(response && typeof response.message === 'string' ? response.message : "Business rejected successfully");
+    } catch (err: any) {
       console.error('Error rejecting business:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to reject business');
+      toast.error(err?.message || 'Failed to reject business');
     } finally {
       setActionLoading(null);
     }

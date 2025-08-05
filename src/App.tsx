@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Toaster } from "./components/ui/toaster";
-import { Toaster as Sonner } from "./components/ui/sonner";
+import { Toaster } from "react-hot-toast";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { UserProvider } from './contexts/UserContext';
 import { BusinessProvider } from './contexts/BusinessContext';
@@ -21,6 +20,7 @@ import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 // Customer Pages
 import Home from "./pages/index.tsx"; 
 import NotFound from "./pages/NotFound";
+import PricingPage from "./pages/PricingPage";
 import AccountPage from "./pages/account/AccountPage";
 import ProfilePage from "./pages/account/ProfilePage";
 import SettingsPage from "./pages/account/SettingsPage";
@@ -43,7 +43,6 @@ import BusinessDashboard from './pages/business/BusinessDashboard';
 import HotelManagement from './pages/business/HotelManagement';
 import RestaurantManagement from './pages/business/RestaurantManagement';
 import TourManagement from './pages/business/TourManagement';
-import ListOfProperty from "./pages/business/Listyourproperty/ListOfProperty";
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -57,6 +56,7 @@ import ListingDetailPage from "./pages/admin/ListingDetailPage.tsx";
 import ListingApprovals from "./pages/admin/ListingApprovals.tsx";
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import BusinessDetailPage from './pages/admin/business-detail/BusinessDetailPage';
+import AdminBankPage from './pages/admin/AdminBankPage';
 
 const queryClient = new QueryClient();
 
@@ -107,15 +107,17 @@ function AppRoutes() {
                         <Route path="/account/settings" element={<SettingsPage />} />
                         <Route path="/account/bookings" element={<BookingsPage />} />
                       </Route>
+                      {/* Public Business Registration Route */}
+                      <Route path="/business/register" element={<BusinessRegistrationForm />} />
+                      {/* Pricing Page Route */}
+                      <Route path="/pricingpage" element={<PricingPage />} />
                       {/* Business Routes (USER only) */}
                       <Route element={<PrivateRoute allowedRoles={['USER']} />}> 
-                        <Route path="/business/register" element={<BusinessRegistrationForm />} />
                         <Route path="/business/dashboard" element={<BusinessDashboard />} />
                         <Route path="/business/hotel" element={<HotelManagement />} />
                         <Route path="/business/restaurant" element={<RestaurantManagement />} />
                         <Route path="/business/tour" element={<TourManagement />} />
-                        <Route path="/business/ListOfProperty" element={<ListOfProperty />} />
-                      </Route>
+                     </Route>
                       {/* Admin Routes (ADMIN only) */}
                       <Route element={<PrivateRoute allowedRoles={['ADMIN']} />}> 
                         <Route path="/admin" element={<AdminDashboard />}> 
@@ -130,6 +132,7 @@ function AppRoutes() {
                           <Route path="settings" element={<AdminSettings />} />
                           <Route path="listing-approvals" element={<ListingApprovals />} />
                           <Route path="listing/:id" element={<ListingDetailPage />} />
+                          <Route path="banks" element={<AdminBankPage />} />
                         </Route>
                       </Route>
                       
@@ -171,8 +174,7 @@ function App() {
                 <Router>
                   <AppRoutes />
                 </Router>
-                <Toaster />
-                <Sonner />
+                <Toaster position="top-right" reverseOrder={false} />
               </TooltipProvider>
             </BusinessProvider>
           </UserProvider>

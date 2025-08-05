@@ -1,13 +1,77 @@
+
 import React, { useState } from 'react';
 import { FiTrash2, FiImage, FiCheck, FiAlertCircle, FiX } from 'react-icons/fi';
 
-const ImageUploader: React.FC<{
+interface ImagesStepProps {
+  images: File[];
+  setImages: React.Dispatch<React.SetStateAction<File[]>>;
+  coverImageIndex: number;
+  setCoverImageIndex: React.Dispatch<React.SetStateAction<number>>;
+  disabled?: boolean;
+}
+
+interface ImageUploaderProps {
   images: File[];
   maxFiles: number;
   onError: (message: string) => void;
   onAddImages: (newFiles: File[]) => void;
   disabled?: boolean;
-}> = ({ images, maxFiles, onError, onAddImages, disabled }) => {
+}
+
+interface ImagePreviewProps {
+  image: File;
+  index: number;
+  isCover: boolean;
+  setAsCover: () => void;
+  disabled?: boolean;
+}
+
+const ImagePreview: React.FC<ImagePreviewProps> = ({ image, index, isCover, setAsCover, disabled }) => {
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    const url = URL.createObjectURL(image);
+    setPreviewUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [image]);
+  return (
+    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-medium text-gray-700">Image Preview #{index + 1}</h3>
+        <button
+          type="button"
+          onClick={setAsCover}
+          className={`flex items-center px-3 py-1.5 rounded-md text-sm ${
+            isCover
+              ? 'bg-green-100 text-green-800'
+              : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+          }`}
+          disabled={disabled}
+        >
+          {isCover ? (
+            <>
+              <FiCheck className="mr-1.5" /> Cover Image
+            </>
+          ) : (
+            'Set as Cover'
+          )}
+        </button>
+      </div>
+      <div className="flex justify-center">
+        {previewUrl && (
+          <img
+            src={previewUrl}
+            alt={`Selected business image ${index}`}
+            className="max-h-64 rounded-lg border border-gray-200 shadow-sm"
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ImageUploader: React.FC<ImageUploaderProps> = ({ images, maxFiles, onError, onAddImages, disabled }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const validateImage = async (file: File): Promise<boolean> => {
@@ -88,7 +152,7 @@ const ImageUploader: React.FC<{
               or <span className="text-blue-600 hover:text-blue-800">browse files</span>
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Supported: JPEG, PNG • Max 35MB each
+              Supported: JPEG, PNG • Max 5MB each
             </p>
           </div>
           <input
@@ -105,29 +169,28 @@ const ImageUploader: React.FC<{
   );
 };
 
-const ImagesStep: React.FC<{
-  images: File[];
-  setImages: React.Dispatch<React.SetStateAction<File[]>>;
-  coverImageIndex: number;
-  setCoverImageIndex: React.Dispatch<React.SetStateAction<number>>;
-  disabled?: boolean;
-}> = ({ images, setImages, coverImageIndex, setCoverImageIndex, disabled }) => {
+const ImagesStep: React.FC<ImagesStepProps> = ({ images, setImages, coverImageIndex, setCoverImageIndex, disabled }) => {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
   const removeImage = (index: number) => {
+    if (images.length <= 1) {
+      setError('At least one image is required.');
+      return;
+    }
     const newImages = [...images];
     newImages.splice(index, 1);
     setImages(newImages);
 
     if (coverImageIndex === index) {
-      setCoverImageIndex(newImages.length > 0 ? 0 : -1);
+      setCoverImageIndex(0);
     } else if (coverImageIndex > index) {
       setCoverImageIndex(coverImageIndex - 1);
     }
 
     if (selectedImage === index) setSelectedImage(null);
     else if (selectedImage !== null && selectedImage > index) setSelectedImage(selectedImage - 1);
+    setError(null);
   };
 
   return (
@@ -158,7 +221,7 @@ const ImagesStep: React.FC<{
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
             {images.map((image, index) => (
               <div
-                key={`${image.name}-${image.lastModified}`}
+                key={`${image.name}-${image.lastModified}-${index}`}
                 className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                   coverImageIndex === index
                     ? 'border-green-500'
@@ -167,11 +230,14 @@ const ImagesStep: React.FC<{
                     : 'border-gray-200'
                 }`}
                 onClick={() => setSelectedImage(index)}
+                tabIndex={0}
+                aria-label={`Select image ${index + 1}`}
               >
                 <img
                   src={URL.createObjectURL(image)}
                   alt={`Business ${index}`}
                   className="w-full h-full object-cover"
+                  onLoad={e => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
                 />
                 {coverImageIndex === index && (
                   <div className="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow">
@@ -193,40 +259,21 @@ const ImagesStep: React.FC<{
               </div>
             ))}
           </div>
-          {selectedImage !== null && (
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-gray-700">Image Preview #{selectedImage + 1}</h3>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCoverImageIndex(selectedImage);
-                    setError(null);
-                  }}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-sm ${
-                    coverImageIndex === selectedImage
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                  }`}
-                  disabled={disabled}
-                >
-                  {coverImageIndex === selectedImage ? (
-                    <>
-                      <FiCheck className="mr-1.5" /> Set as Cover
-                    </>
-                  ) : (
-                    'Set as Cover'
-                  )}
-                </button>
-              </div>
-              <div className="flex justify-center">
-                <img
-                  src={URL.createObjectURL(images[selectedImage])}
-                  alt={`Selected business image ${selectedImage}`}
-                  className="max-h-64 rounded-lg border border-gray-200 shadow-sm"
-                />
-              </div>
-            </div>
+          {selectedImage !== null && images[selectedImage] && (
+            <ImagePreview
+              image={images[selectedImage]}
+              index={selectedImage}
+              isCover={coverImageIndex === selectedImage}
+              setAsCover={() => {
+                if (selectedImage === null || !images[selectedImage]) {
+                  setError('Select a valid image to set as cover.');
+                  return;
+                }
+                setCoverImageIndex(selectedImage);
+                setError(null);
+              }}
+              disabled={disabled}
+            />
           )}
         </div>
       )}

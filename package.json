@@ -6,13 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.0.2",
+    "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-toast": "^1.2.14",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tanstack/react-query": "^5.77.2",
@@ -37,7 +40,8 @@
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
     "world-countries": "^5.1.0",
-    "yup": "^1.6.1"
+    "yup": "^1.6.1",
+    "zod": "^4.0.14"
   },
   "devDependencies": {
     "@types/react": "^18.3.5",

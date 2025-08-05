@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useParams, Link } from 'react-router-dom';
 import apiService from '../../../services/apiService';
 import { Loader2, ArrowLeft, Building } from 'lucide-react';
@@ -69,19 +70,32 @@ const BusinessDetail: React.FC = () => {
         endpoint = 'admin/businesses/delete';
         payload = { businessId: business.id };
       }
-      await apiService().sendPostToServer(endpoint, payload);
-      setSuccessMsg(
-        action === 'approve'
-          ? 'Business approved successfully.'
-          : action === 'reject'
-          ? 'Business rejected.'
-          : 'Business deactivated.'
-      );
+      const response = await apiService().sendPostToServer(endpoint, payload) as { message?: string };
+      if (response?.message) {
+        toast.success(response.message);
+        setSuccessMsg(response.message);
+      } else {
+        setSuccessMsg(
+          action === 'approve'
+            ? 'Business approved successfully.'
+            : action === 'reject'
+            ? 'Business rejected.'
+            : 'Business deactivated.'
+        );
+        toast.success(
+          action === 'approve'
+            ? 'Business approved successfully.'
+            : action === 'reject'
+            ? 'Business rejected.'
+            : 'Business deactivated.'
+        );
+      }
       // Optionally update status in UI
       setBusiness((prev) =>
         prev ? { ...prev, status: action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'deactivated' } : prev
       );
-    } catch (err) {
+    } catch (err: any) {
+      toast.error(err?.message || 'Action failed.');
       setSuccessMsg('Action failed.');
     } finally {
       setActionLoading(null);

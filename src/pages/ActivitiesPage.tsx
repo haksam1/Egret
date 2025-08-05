@@ -1,12 +1,13 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, MapPin, Search, Mountain, Bike, Waves, Castle, UserCircle } from 'lucide-react';
+import { Star, MapPin, Search, Mountain, Bike, Waves, Castle } from 'lucide-react';
+import { toast, Toaster } from 'react-hot-toast';
 
 const ActivitiesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [activityType, setActivityType] = useState<string>('all');
+  const [showNoActivitiesToast, setShowNoActivitiesToast] = useState(false);
 
   // Sample activities data - in a real app, this would come from an API
   const activities = [
@@ -105,188 +106,210 @@ const ActivitiesPage: React.FC = () => {
     return matchesSearch && matchesPrice && matchesType;
   });
 
+  const handleBookActivity = (activityName: string) => {
+    toast.success(`You booked: ${activityName}`);
+  };
+
+  React.useEffect(() => {
+    if (filteredActivities.length === 0 && !showNoActivitiesToast) {
+      toast.error("No activities found. Try adjusting your search criteria or filters.");
+      setShowNoActivitiesToast(true);
+    } else if (filteredActivities.length > 0 && showNoActivitiesToast) {
+      setShowNoActivitiesToast(false);
+    }
+  }, [filteredActivities.length, showNoActivitiesToast]);
+
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Activities & Experiences</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Discover exciting activities to enhance your stay
-          </p>
-        </div>
-
-        {/* Search and Filter Section */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-end gap-4">
-            <div className="flex-grow">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search Activities
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Activity name or location"
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-
-            <div className="w-full md:w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price Range
-              </label>
-              <select
-                value={`${priceRange[0]}-${priceRange[1]}`}
-                onChange={(e) => {
-                  const [min, max] = e.target.value.split('-').map(Number);
-                  setPriceRange([min, max]);
-                }}
-                className="w-full border border-gray-300 rounded-md py-2 pl-3 pr-10 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="0-500">Any Price</option>
-                <option value="0-50">Budget (Under $50)</option>
-                <option value="50-100">Standard ($50 - $100)</option>
-                <option value="100-200">Premium ($100 - $200)</option>
-                <option value="200-500">Luxury ($200+)</option>
-              </select>
-            </div>
-
-            <div className="w-full md:w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Activity Type
-              </label>
-              <select
-                value={activityType}
-                onChange={(e) => setActivityType(e.target.value)}
-                className="w-full border border-gray-300 rounded-md py-2 pl-3 pr-10 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="all">All Types</option>
-                <option value="adventure">Adventure</option>
-                <option value="cultural">Cultural</option>
-                <option value="exploration">Exploration</option>
-                <option value="wildlife">Wildlife</option>
-              </select>
-            </div>
-
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
-              Apply Filters
-            </button>
-          </div>
-        </div>
-
-        {/* Activities Grid */}
-        {filteredActivities.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredActivities.map((activity) => (
-              <div
-                key={activity.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300"
-              >
-                <div className="relative h-60">
-                  <img
-                    src={activity.image}
-                    alt={activity.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 right-3 bg-white rounded-full px-2 py-1 flex items-center">
-                    <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                    <span className="text-sm font-medium">{activity.rating}</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex justify-between">
-                    <h3 className="text-xl font-semibold text-gray-900">{activity.name}</h3>
-                    <p className="font-bold text-green-600">${activity.price}</p>
-                  </div>
-                  <div className="flex items-center mt-2 text-gray-500">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    <span>{activity.location}</span>
-                    <span className="mx-2 text-gray-400">•</span>
-                    <span>{activity.duration}</span>
-                  </div>
-                  <p className="mt-3 text-gray-600 line-clamp-2">{activity.description}</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {activity.features.slice(0, 3).map((feature, i) => (
-                      <span
-                        key={i}
-                        className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded"
-                      >
-                        {feature}
-                      </span>
-                    ))}
-                    {activity.features.length > 3 && (
-                      <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
-                        +{activity.features.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                  <Link
-                    to={`/activities/${activity.id}`}
-                    className="mt-6 block w-full bg-green-600 hover:bg-green-700 text-white text-center px-4 py-2 rounded-md transition-colors"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <Mountain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No activities found</h3>
-            <p className="text-gray-600">
-              Try adjusting your search criteria or filters to find more options
+    <>
+      <Toaster position="top-right" />
+      <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Activities & Experiences</h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Discover exciting activities to enhance your stay
             </p>
           </div>
-        )}
 
-        {/* Featured Experiences */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">Featured Experiences</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Family Package",
-                discount: "20% OFF",
-                description: "Special discount for family bookings of 4 or more",
-                color: "bg-gradient-to-r from-green-500 to-green-600"
-              },
-              {
-                title: "Early Bird Special",
-                discount: "15% OFF",
-                description: "Book activities at least 7 days in advance",
-                color: "bg-gradient-to-r from-blue-500 to-blue-600"
-              },
-              {
-                title: "Adventure Bundle",
-                discount: "25% OFF",
-                description: "Book 3 or more adventure activities together",
-                color: "bg-gradient-to-r from-purple-500 to-purple-600"
-              }
-            ].map((deal, index) => (
-              <div
-                key={index}
-                className={`${deal.color} text-white rounded-lg shadow-md p-6 flex flex-col justify-between`}
-              >
-                <div>
-                  <h3 className="text-xl font-bold mb-2">{deal.title}</h3>
-                  <p className="mb-4">{deal.description}</p>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-2xl font-bold">{deal.discount}</span>
-                  <button className="bg-white text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors">
-                    View Offer
-                  </button>
+          {/* Search and Filter Section */}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div className="flex flex-col md:flex-row md:items-end gap-4">
+              <div className="flex-grow">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Search Activities
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Activity name or location"
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                  />
+                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 </div>
               </div>
-            ))}
+
+              <div className="w-full md:w-48">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price Range
+                </label>
+                <select
+                  value={`${priceRange[0]}-${priceRange[1]}`}
+                  onChange={(e) => {
+                    const [min, max] = e.target.value.split('-').map(Number);
+                    setPriceRange([min, max]);
+                  }}
+                  className="w-full border border-gray-300 rounded-md py-2 pl-3 pr-10 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="0-500">Any Price</option>
+                  <option value="0-50">Budget (Under $50)</option>
+                  <option value="50-100">Standard ($50 - $100)</option>
+                  <option value="100-200">Premium ($100 - $200)</option>
+                  <option value="200-500">Luxury ($200+)</option>
+                </select>
+              </div>
+
+              <div className="w-full md:w-48">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Activity Type
+                </label>
+                <select
+                  value={activityType}
+                  onChange={(e) => setActivityType(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md py-2 pl-3 pr-10 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="all">All Types</option>
+                  <option value="adventure">Adventure</option>
+                  <option value="cultural">Cultural</option>
+                  <option value="exploration">Exploration</option>
+                  <option value="wildlife">Wildlife</option>
+                </select>
+              </div>
+
+              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
+                Apply Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Activities Grid */}
+          {filteredActivities.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredActivities.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="relative h-60">
+                    <img
+                      src={activity.image}
+                      alt={activity.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-3 right-3 bg-white rounded-full px-2 py-1 flex items-center">
+                      <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                      <span className="text-sm font-medium">{activity.rating}</span>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex justify-between">
+                      <h3 className="text-xl font-semibold text-gray-900">{activity.name}</h3>
+                      <p className="font-bold text-green-600">${activity.price}</p>
+                    </div>
+                    <div className="flex items-center mt-2 text-gray-500">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      <span>{activity.location}</span>
+                      <span className="mx-2 text-gray-400">•</span>
+                      <span>{activity.duration}</span>
+                    </div>
+                    <p className="mt-3 text-gray-600 line-clamp-2">{activity.description}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {activity.features.slice(0, 3).map((feature, i) => (
+                        <span
+                          key={i}
+                          className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                      {activity.features.length > 3 && (
+                        <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                          +{activity.features.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                    <Link
+                      to={`/activities/${activity.id}`}
+                      className="mt-6 block w-full bg-green-600 hover:bg-green-700 text-white text-center px-4 py-2 rounded-md transition-colors"
+                    >
+                      View Details
+                    </Link>
+                    <button
+                      onClick={() => handleBookActivity(activity.name)}
+                      className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-center px-4 py-2 rounded-md transition-colors"
+                    >
+                      Book Now
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+              <Mountain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-2">No activities found</h3>
+              <p className="text-gray-600">
+                Try adjusting your search criteria or filters to find more options
+              </p>
+            </div>
+          )}
+
+          {/* Featured Experiences */}
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">Featured Experiences</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  title: "Family Package",
+                  discount: "20% OFF",
+                  description: "Special discount for family bookings of 4 or more",
+                  color: "bg-gradient-to-r from-green-500 to-green-600"
+                },
+                {
+                  title: "Early Bird Special",
+                  discount: "15% OFF",
+                  description: "Book activities at least 7 days in advance",
+                  color: "bg-gradient-to-r from-blue-500 to-blue-600"
+                },
+                {
+                  title: "Adventure Bundle",
+                  discount: "25% OFF",
+                  description: "Book 3 or more adventure activities together",
+                  color: "bg-gradient-to-r from-purple-500 to-purple-600"
+                }
+              ].map((deal, index) => (
+                <div
+                  key={index}
+                  className={`${deal.color} text-white rounded-lg shadow-md p-6 flex flex-col justify-between`}
+                >
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">{deal.title}</h3>
+                    <p className="mb-4">{deal.description}</p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-2xl font-bold">{deal.discount}</span>
+                    <button className="bg-white text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors">
+                      View Offer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

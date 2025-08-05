@@ -53,14 +53,14 @@ const BusinessDetailPage: React.FC = () => {
                       : '';
       const res = await apiService().sendPostToServer<{ success?: boolean; message?: string }>(endpoint, payload);
       if (res?.success) {
-        toast.success(`Business ${action}d successfully`);
+        toast.success(res?.message || `Business ${action}d successfully`);
         if (action !== 'update') navigate('/admin/businesses');
         else if (business) setBusiness({ ...business, name: business.name + ' (Updated)' });
       } else {
         toast.error(res?.message || `Failed to ${action} business`);
       }
-    } catch {
-      toast.error(`Failed to ${action} business`);
+    } catch (err: any) {
+      toast.error(err?.message || `Failed to ${action} business`);
     }
   };
 

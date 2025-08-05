@@ -4,6 +4,7 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  isBusiness: any;
   email: string;
   password: string;
   firstName: string;
@@ -33,6 +34,7 @@ export interface UserDto {
   city: string;
   country: string;
   postalCode: string;
+  isBusiness?: boolean;
 }
 
 export interface Room {

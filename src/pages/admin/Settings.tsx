@@ -36,7 +36,7 @@ const AdminSettings: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        const response = await apiService().sendPostToServer('admin/settings', {});
+        const response = await apiService().sendPostToServer('admin/settings', {}) as { settings?: Partial<SettingsData> };
         
         // If response is successful but empty, use defaults
         if (!response) {
@@ -78,12 +78,12 @@ const AdminSettings: React.FC = () => {
       setSaving(true);
       setError(null);
       
-      await apiService().sendPostToServer('admin/updateSettings', formData);
-      toast.success('Settings saved successfully');
-    } catch (error) {
+      const response = await apiService().sendPostToServer('admin/updateSettings', formData) as { message?: string };
+      toast.success(response?.message || 'Settings saved successfully');
+    } catch (error: any) {
       console.error('Error saving settings:', error);
-      setError('Failed to save settings. Please try again.');
-      toast.error('Failed to save settings');
+      setError(error?.message || 'Failed to save settings. Please try again.');
+      toast.error(error?.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }

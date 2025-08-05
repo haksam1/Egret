@@ -1,5 +1,33 @@
 import React from 'react';
-import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+// Attachments config
+const ATTACHMENTS = [
+  { label: 'Certified Copy Of Registered Business Name', name: 'businessNameCert', required: true, type: 'file' },
+  { label: 'Certified Copy Of Trade License', name: 'tradeLicense', required: true, type: 'file' },
+  { label: 'Certified Copy Tax Certificate', name: 'taxCert', required: true, type: 'file' },
+  { label: 'Passport Photo', name: 'passportPhoto', required: true, type: 'file' },
+  { label: 'Nin Number (Upload National ID)', name: 'ninId', required: true, type: 'text' },
+];
+import { FiCheckCircle, FiAlertCircle, FiMapPin, FiHome, FiDollarSign, FiUser, FiImage, FiPaperclip } from 'react-icons/fi';
+import { BusinessRegistrationForm } from '../../types/types';
+
+// Section wrapper component for consistent styling
+const SectionWrapper: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ 
+  title, 
+  icon, 
+  children 
+}) => (
+  <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200 shadow-sm">
+    <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-green-300 flex items-center">
+      <span className="bg-green-200 text-green-800 p-2 rounded-lg mr-3 flex items-center justify-center">
+        {icon}
+      </span>
+      {title}
+    </h3>
+    <div className="space-y-4">
+      {children}
+    </div>
+  </div>
+);
 
 interface DetailItemProps {
   label: string;
@@ -8,79 +36,66 @@ interface DetailItemProps {
 }
 
 const DetailItem: React.FC<DetailItemProps> = ({ label, value, className = '' }) => (
-  <div className={`mb-2 ${className}`}>
-    <p className="text-sm font-medium text-gray-600">{label}</p>
-    <p className="text-gray-800 font-medium">{value || '-'}</p>
+  <div className={`mb-3 ${className}`}>
+    <p className="text-xs font-medium text-green-700 uppercase tracking-wider">{label}</p>
+    <p className="text-gray-800 font-medium mt-1 bg-white p-2 rounded-md border border-green-100">
+      {value || <span className="text-gray-400">Not provided</span>}
+    </p>
   </div>
 );
 
-interface StaffMember {
-  name: string;
-  position: string;
-  email: string;
-  contact_phone_1: string;
-  contact_phone_2?: string;
+// Render amenities if present
+function renderAmenities(values: any) {
+  if (!values.amenities || !values.amenities.length) return null;
+  return (
+    <SectionWrapper title="Amenities" icon={<FiHome size={18} />}>
+      <div className="flex flex-wrap gap-2">
+        {values.amenities.map((amenity: string, idx: number) => (
+          <span 
+            key={idx} 
+            className="bg-green-200 text-green-900 px-3 py-1.5 rounded-full text-sm font-medium flex items-center"
+          >
+            <FiCheckCircle className="mr-1.5" size={14} />
+            {amenity}
+          </span>
+        ))}
+      </div>
+    </SectionWrapper>
+  );
 }
 
-interface BusinessValues {
-  business_type_id?: string;
-  name?: string;
-  contact_phone?: string;
-  contact_email?: string;
-  status?: string;
-  description?: string;
-  region_name?: string;
-  region_id?: string;
-  district_name?: string;
-  district_id?: string;
-  county_name?: string;
-  county_id?: string;
-  sub_county_name?: string;
-  sub_county_id?: string;
-  parish_name?: string;
-  parish_id?: string;
-  village?: string;
-  staffMembers?: StaffMember[];
-  amenities?: string[];
-  bank_name?: string;
-  bank_branch?: string;
-  account_name?: string;
-  account_type?: string;
+// Render staff if present
+function renderStaff(values: any) {
+  if (!values.staff || !values.staff.length) return null;
+  return (
+    <SectionWrapper title="Staff Members" icon={<FiUser size={18} />}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {values.staff.map((staff: any, idx: number) => (
+          <div key={idx} className="bg-white p-4 rounded-lg shadow-sm border border-green-100">
+            <DetailItem label="Name" value={getDisplayName(staff.name)} />
+            <DetailItem label="Email" value={getDisplayName(staff.email)} />
+            <DetailItem label="Position" value={getDisplayName(staff.position)} />
+            <DetailItem label="Phone 1" value={getDisplayName(staff.contact_phone_1)} />
+            <DetailItem label="Phone 2" value={getDisplayName(staff.contact_phone_2)} />
+          </div>
+        ))}
+      </div>
+    </SectionWrapper>
+  );
 }
+
+const getDisplayName = (name?: string) => {
+  if (typeof name === 'string' && name.trim()) return name;
+  return null;
+};
 
 interface ReviewStepProps {
-  values: BusinessValues;
+  values: BusinessRegistrationForm;
   images: File[];
   coverImageIndex: number;
   error?: string;
+  onAgree?: () => void;
 }
-
-const BUSINESS_TYPES: Record<string, string> = {
-  '1': 'Hotel',
-  '2': 'Restaurant',
-  '3': 'Resort',
-  '4': 'Lodge',
-  '5': 'Guest House'
-};
-
-const STATUS_OPTIONS: Record<string, string> = {
-  'ACTIVE': 'Active',
-  'INACTIVE': 'Inactive'
-};
-
-const ACCOUNT_TYPES: Record<string, string> = {
-  'SAVINGS': 'Savings Account',
-  'CHECKING': 'Checking Account',
-  'BUSINESS': 'Business Account',
-  'FIXED_DEPOSIT': 'Fixed Deposit',
-  'CURRENT': 'Current Account'
-};
-
-const getDisplayName = (name?: string, id?: string) => {
-  if (typeof name === 'string' && name.trim()) return name;
-  if (typeof id === 'string' && id.trim()) return `ID: ${id}`;
-  return '-';
-};
 
 const ReviewStep: React.FC<ReviewStepProps> = ({
   values,
@@ -89,6 +104,9 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   error
 }) => {
   const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
+  const [attachmentPreviews, setAttachmentPreviews] = React.useState<{name: string, urls: string[]}[]>([]);
+  // For image modal
+  const [modalImage, setModalImage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const previews = images.map(file => URL.createObjectURL(file));
@@ -99,143 +117,106 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
     };
   }, [images]);
 
+  React.useEffect(() => {
+    const attachmentKeys = Object.keys(values || {});
+    const previewList: {name: string, urls: string[]}[] = [];
+    const valuesAny = values as any;
+    attachmentKeys.forEach(key => {
+      const val = valuesAny[key];
+      if (val instanceof File && val.type && val.type.startsWith('image/')) {
+        previewList.push({ name: key, urls: [URL.createObjectURL(val)] });
+      } else if (Array.isArray(val) && val.length && val[0] instanceof File) {
+        const urls = val.filter((f: File) => f.type && f.type.startsWith('image/')).map((f: File) => URL.createObjectURL(f));
+        if (urls.length) previewList.push({ name: key, urls });
+      }
+    });
+    setAttachmentPreviews(previewList);
+    return () => {
+      previewList.forEach(item => item.urls.forEach(url => URL.revokeObjectURL(url)));
+    };
+  }, [values]);
+
   const renderBusinessInfo = () => (
-    <div className="bg-green-50 p-6 rounded-xl border border-green-100">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-green-200 flex items-center">
-        <FiCheckCircle className="bg-green-100 text-green-800 p-2 rounded-lg mr-3" size={20} />
-        Business Information
-      </h3>
+    <SectionWrapper title="Business Information" icon={<FiHome size={18} />}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <DetailItem label="Business Type" value={BUSINESS_TYPES[values.business_type_id || ''] || getDisplayName(undefined, values.business_type_id)} />
-        <DetailItem label="Business Name" value={getDisplayName(values.name)} />
-        <DetailItem label="Contact Phone" value={getDisplayName(values.contact_phone)} />
-        <DetailItem label="Contact Email" value={getDisplayName(values.contact_email)} />
-        <DetailItem label="Status" value={STATUS_OPTIONS[values.status || ''] || getDisplayName(undefined, values.status)} />
-        <div className="md:col-span-2">
-          <DetailItem label="Description" value={getDisplayName(values.description)} />
-        </div>
+        <DetailItem label="Business Type" value={getDisplayName(values.businessType)} />
+        {values.businessType === 'group' && (
+          <DetailItem label="Group Name" value={getDisplayName(values.parentInstitutionName)} />
+        )}
+        <DetailItem label="Legal Name" value={getDisplayName(values.legalName)} />
+        <DetailItem label="Trading Name" value={getDisplayName(values.tradingName)} />
+        <DetailItem label="Ownership Type" value={getDisplayName(values.branchType)} />
+        <DetailItem label="Displayed Business Name" value={getDisplayName(values.businessName)} />
+        <DetailItem label="Website" value={getDisplayName(values.websiteUrl)} />
+        <DetailItem label="Contact Phone" value={getDisplayName(values.contactPhone)} />
+        <DetailItem label="Email Address" value={getDisplayName(values.emailAddress)} />
+        <DetailItem label="Date of Establishment" value={getDisplayName(values.registrationDate)} />
+        <DetailItem label="Registration Authority" value={getDisplayName(values.registrationAuthority)} />
       </div>
-    </div>
+    </SectionWrapper>
   );
 
-  const renderStaffMembers = () => {
-    if (!values.staffMembers?.length) return null;
+  const renderLocationDetails = () => (
+    <SectionWrapper title="Location Details" icon={<FiMapPin size={18} />}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <DetailItem label="Region" value={getDisplayName(values.regionName) || getDisplayName(values.region)} />
+        <DetailItem label="District" value={getDisplayName(values.districtName) || getDisplayName(values.district)} />
+        <DetailItem label="County" value={getDisplayName(values.countyName) || getDisplayName(values.county)} />
+        <DetailItem label="Sub-County" value={getDisplayName(values.subCountyName) || getDisplayName(values.subCounty)} />
+        <DetailItem label="Parish" value={getDisplayName(values.parishName) || getDisplayName(values.parish)} />
+        <DetailItem label="Physical Address" value={getDisplayName(values.physicalAddress)} />
+      </div>
+    </SectionWrapper>
+  );
 
+  const renderBankInfo = () => {
+    if (!values.bankAccounts || !values.bankAccounts.length) return null;
     return (
-      <div className="bg-green-50 p-6 rounded-xl border border-green-100">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-green-200 flex items-center">
-          <FiCheckCircle className="bg-green-100 text-green-800 p-2 rounded-lg mr-3" size={20} />
-          Staff Members ({values.staffMembers.length})
-        </h3>
+      <SectionWrapper title={`Bank Accounts (${values.bankAccounts.length})`} icon={<FiDollarSign size={18} />}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {values.staffMembers.map((staff, index) => (
-            <div key={index} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-              <h4 className="font-medium text-green-700 mb-2">Staff #{index + 1}</h4>
-              <DetailItem label="Name" value={getDisplayName(staff.name)} />
-              <DetailItem label="Position" value={getDisplayName(staff.position)} />
-              <DetailItem label="Email" value={getDisplayName(staff.email)} />
-              <DetailItem label="Primary Phone" value={getDisplayName(staff.contact_phone_1)} />
-              {staff.contact_phone_2 && staff.contact_phone_2.trim() && (
-                <DetailItem label="Secondary Phone" value={getDisplayName(staff.contact_phone_2)} />
-              )}
+          {values.bankAccounts.map((account: { bankName: string | undefined; accountName: string | undefined; accountNumber: string | undefined; branch: string | undefined; isPrimary: any; }, idx: React.Key | null | undefined) => (
+            <div key={idx} className="bg-white p-4 rounded-lg shadow-sm border border-green-100">
+              <DetailItem label="Bank" value={getDisplayName(account.bankName)} />
+              <DetailItem label="Account Name" value={getDisplayName(account.accountName)} />
+              <DetailItem label="Account Number" value={getDisplayName(account.accountNumber)} />
+              <DetailItem label="Branch" value={getDisplayName(account.branch)} />
+              <DetailItem label="Primary" value={account.isPrimary ? 'Yes' : 'No'} />
             </div>
           ))}
         </div>
-      </div>
+      </SectionWrapper>
     );
   };
 
-  const renderLocationDetails = () => {
-    const hasLocationDetails =
-      !!(
-        (values.region_name && values.region_name.trim()) ||
-        (values.district_name && values.district_name.trim()) ||
-        (values.county_name && values.county_name.trim()) ||
-        (values.sub_county_name && values.sub_county_name.trim()) ||
-        (values.parish_name && values.parish_name.trim()) ||
-        (values.village && values.village.trim()) ||
-        (values.region_id && values.region_id.trim()) ||
-        (values.district_id && values.district_id.trim()) ||
-        (values.county_id && values.county_id.trim()) ||
-        (values.sub_county_id && values.sub_county_id.trim()) ||
-        (values.parish_id && values.parish_id.trim())
-      );
-
-    if (!hasLocationDetails) {
-      return null;
-    }
-
-    return (
-      <div className="bg-green-50 p-6 rounded-xl border border-green-100">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-green-200 flex items-center">
-          <FiCheckCircle className="bg-green-100 text-green-800 p-2 rounded-lg mr-3" size={20} />
-          Location Details
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DetailItem label="Region" value={getDisplayName(values.region_name, values.region_id)} />
-          <DetailItem label="District" value={getDisplayName(values.district_name, values.district_id)} />
-          <DetailItem label="County" value={getDisplayName(values.county_name, values.county_id)} />
-          <DetailItem label="Sub-County" value={getDisplayName(values.sub_county_name, values.sub_county_id)} />
-          <DetailItem label="Parish" value={getDisplayName(values.parish_name, values.parish_id)} />
-          <DetailItem label="Village" value={getDisplayName(values.village)} />
-        </div>
+const renderContacts = () => {
+  if (!values.contacts || !values.contacts.length) return null;
+  return (
+    <SectionWrapper title={`Contacts (${values.contacts.length})`} icon={<FiUser size={18} />}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {values.contacts.map((contact, idx) => (
+          <div key={idx} className="bg-white p-4 rounded-lg shadow-sm border border-green-100">
+            <DetailItem label="Name" value={getDisplayName(contact.name)} />
+            <DetailItem label="Email" value={getDisplayName(contact.email)} />
+            <DetailItem label="Phone" value={getDisplayName(contact.phone)} />
+            <DetailItem label="Alternate Phone" value={getDisplayName(contact.alternatePhone)} />
+            <DetailItem label="Physical Address" value={getDisplayName(contact.physicalAddress)} />
+            <DetailItem label="Primary" value={contact.isPrimary ? 'Yes' : 'No'} />
+            <DetailItem label="Parish" value={getDisplayName(contact.parish)} />
+            <DetailItem label="Sub-County" value={getDisplayName(contact.subCounty)} />
+            <DetailItem label="County" value={getDisplayName(contact.county)} />
+            <DetailItem label="District" value={getDisplayName(contact.district)} />
+            <DetailItem label="Region" value={getDisplayName(contact.region)} />
+          </div>
+        ))}
       </div>
-    );
-  };
-
-  const renderBankInfo = () => {
-    if (!values.bank_name && !values.bank_branch && !values.account_name && !values.account_type) {
-      return null;
-    }
-
-    return (
-      <div className="bg-green-50 p-6 rounded-xl border border-green-100">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-green-200 flex items-center">
-          <FiCheckCircle className="bg-green-100 text-green-800 p-2 rounded-lg mr-3" size={20} />
-          Bank Information
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DetailItem label="Bank Name" value={getDisplayName(values.bank_name)} />
-          <DetailItem label="Bank Branch" value={getDisplayName(values.bank_branch)} />
-          <DetailItem label="Account Name" value={getDisplayName(values.account_name)} />
-          <DetailItem label="Account Type" value={ACCOUNT_TYPES[values.account_type || ''] || getDisplayName(undefined, values.account_type)} />
-        </div>
-      </div>
-    );
-  };
-
-  const renderAmenities = () => {
-    if (!values.amenities?.length) return null;
-
-    return (
-      <div className="bg-green-50 p-6 rounded-xl border border-green-100">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-green-200 flex items-center">
-          <FiCheckCircle className="bg-green-100 text-green-800 p-2 rounded-lg mr-3" size={20} />
-          Amenities ({values.amenities.length})
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {values.amenities.map((amenity, index) => (
-            <span
-              key={index}
-              className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 border border-green-200"
-            >
-              {amenity}
-            </span>
-          ))}
-        </div>
-      </div>
-    );
-  };
+    </SectionWrapper>
+  );
+};
 
   const renderBusinessImages = () => {
     if (!images.length) return null;
-
     return (
-      <div className="bg-green-50 p-6 rounded-xl border border-green-100">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-green-200 flex items-center">
-          <FiCheckCircle className="bg-green-100 text-green-800 p-2 rounded-lg mr-3" size={20} />
-          Business Images ({images.length})
-        </h3>
+      <SectionWrapper title={`Business Images (${images.length})`} icon={<FiImage size={18} />}>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {imagePreviews.map((src, index) => (
             <div key={index} className="relative group">
@@ -245,42 +226,122 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                 className="w-full h-32 object-cover rounded-lg shadow-sm border-2 border-gray-100 group-hover:border-green-300 transition-all"
               />
               {coverImageIndex === index && (
-                <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-md shadow">
+                <span className="absolute top-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded-md shadow-md">
                   Cover Image
                 </span>
               )}
             </div>
           ))}
         </div>
-      </div>
+      </SectionWrapper>
+    );
+  };
+
+  const renderAttachments = () => {
+    if (!ATTACHMENTS.length) return null;
+    return (
+      <SectionWrapper title="Uploaded Attachments" icon={<FiPaperclip size={18} />}>
+        <div className="space-y-4">
+          {ATTACHMENTS.map(att => {
+            // File attachments
+            if (att.type === 'file') {
+              const preview = attachmentPreviews.find(a => a.name === att.name);
+              return (
+                <div key={att.name}>
+                  <div className="text-sm font-medium text-green-700 mb-2">{att.label}</div>
+                  <div className="flex flex-wrap gap-3">
+                    {preview && preview.urls.length > 0 ? preview.urls.map((url, idx) => (
+                      <div key={idx} className="relative">
+                        <img
+                          src={url}
+                          alt={att.label + '-' + idx}
+                          className="h-20 rounded-md border border-green-200 object-cover shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => setModalImage(url)}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1 text-white text-xs truncate">
+                          {att.label}-{idx+1}
+                        </div>
+                      </div>
+                    )) : (
+                      <span className="text-gray-400 text-xs">Not uploaded</span>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            // Text attachments (e.g. ninId)
+            if (att.type === 'text') {
+              return (
+                <div key={att.name}>
+                  <div className="text-sm font-medium text-green-700 mb-2">{att.label}</div>
+                  <div className="bg-white border border-green-100 rounded px-3 py-2 text-green-900 text-sm">
+                    {getDisplayName((values as any)[att.name]) || <span className="text-gray-400">Not provided</span>}
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })}
+        </div>
+        {/* Image modal */}
+        {modalImage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setModalImage(null)}>
+            <div className="relative max-w-3xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+              <img src={modalImage} alt="Preview" className="max-h-[80vh] w-auto rounded-lg shadow-2xl border-4 border-white" />
+              <button
+                className="mt-4 px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700"
+                onClick={() => setModalImage(null)}
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        )}
+      </SectionWrapper>
     );
   };
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg">
+    <div className="bg-white p-6 rounded-xl shadow-lg border border-green-100 max-w-6xl mx-auto">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Review Your Business Details</h2>
-        <p className="text-green-600 flex items-center justify-center">
-          <FiCheckCircle className="mr-2" />
+        <h2 className="text-3xl font-bold text-gray-800 mb-3">Review Your Business Details</h2>
+        <p className="text-green-600 flex items-center justify-center text-lg">
+          <FiCheckCircle className="mr-2" size={20} />
           Please verify all information before submitting
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-3 bg-red-50 text-red-700 rounded-lg flex items-start border border-red-200">
-          <FiAlertCircle className="mr-2 mt-0.5 flex-shrink-0" />
-          <span>{error}</span>
+        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg flex items-start border border-red-200 shadow-sm">
+          <FiAlertCircle className="mr-3 mt-0.5 flex-shrink-0" size={20} />
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
-      <div className="space-y-8">
-        {renderBusinessInfo()}
-        {renderStaffMembers()}
-        {renderLocationDetails()}
-        {renderBankInfo()}
-        {renderAmenities()}
-        {renderBusinessImages()}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left column */}
+        <div className="space-y-6">
+          {renderBusinessInfo()}
+          {renderContacts()}
+          {renderAmenities(values)}
+          {renderStaff(values)}
+        </div>
+        
+        {/* Right column */}
+        <div className="space-y-6">
+          {renderLocationDetails()}
+          {renderBankInfo()}
+          {renderBusinessImages()}
+          {renderAttachments()}
+        </div>
       </div>
+
+      {/* Fallback if all sections are empty */}
+      {!(values && (Object.keys(values).length > 0)) && images.length === 0 && (
+        <div className="text-center text-gray-500 py-8 bg-green-50 rounded-lg">
+          No data to review. Please fill in the previous steps.
+        </div>
+      )}
     </div>
   );
 };

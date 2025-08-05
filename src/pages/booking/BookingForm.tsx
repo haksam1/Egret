@@ -258,6 +258,7 @@ const BookingForm: React.FC = () => {
       };
 
       const response = await apiService().sendPostToServer('/bookings', bookingData);
+      toast({ title: "Booking Confirmed!", description: "Your booking was successful.", variant: "success" });
       navigate('/booking/confirmation', { state: { booking: response.returnObject } });
     } catch (error: any) {
       toast({ title: "Error", description: error?.response?.data?.message || "Booking failed", variant: "destructive" });

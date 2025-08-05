@@ -35,7 +35,7 @@ const AdminBookings: React.FC = () => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const response = await apiService().sendPostToServer("admin/bookings", {});
+        const response = await apiService().sendPostToServer("admin/bookings", {}) as { bookings: Booking[] };
         setBookings(response?.bookings || []); // Ensure we fall back to empty array
       } catch (error) {
         console.error("Error fetching bookings:", error);
@@ -91,7 +91,7 @@ const AdminBookings: React.FC = () => {
         { responseType: "blob" }
       );
 
-      const blob = new Blob([response], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([response as BlobPart], { type: "text/csv;charset=utf-8;" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -99,10 +99,10 @@ const AdminBookings: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success("Bookings exported successfully");
+      toast.success((response as any)?.message || "Bookings exported successfully");
     } catch (error) {
       console.error("Error exporting bookings:", error);
-      toast.error("Failed to export bookings");
+      toast.error((error as any)?.message || "Failed to export bookings");
     }
   };
 

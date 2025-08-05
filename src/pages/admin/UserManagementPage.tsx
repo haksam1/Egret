@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, X, User, Mail, Loader2 } from 'lucide-react';
+import { Check, X, User, Loader2 } from 'lucide-react';
 import apiService from '../../services/apiService';
 import { toast } from 'react-hot-toast';
 
@@ -21,12 +21,12 @@ const UserManagementPage: React.FC = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await apiService().sendPostToServer('admin/users', {});
-        const usersData = (response as any)?.data || (response as any)?.returnObject || [];
-        if (!Array.isArray(usersData)) throw new Error('Invalid users data format');
+        const response = await apiService().sendPostToServer('admin/users', {}) as { data?: UserType[], message?: string };
+        const usersData = response?.data || (response as any)?.returnObject || [];
+        if (!Array.isArray(usersData)) throw new Error(response?.message || 'Invalid users data format');
         setUsers(usersData);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to load users');
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to load users');
         setUsers([]);
       } finally {
         setLoading(false);
@@ -46,11 +46,11 @@ const UserManagementPage: React.FC = () => {
   const handleActivate = async (id: string) => {
     try {
       setActionLoading(`activate-${id}`);
-      await apiService().sendPostToServer('admin/users/activate', { id });
+      const response = await apiService().sendPostToServer('admin/users/activate', { id }) as { message?: string };
       setUsers(prev => prev.map(u => u.id === id ? { ...u, status: 'active' } : u));
-      toast.success('User activated successfully');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to activate user');
+      toast.success(response?.message || 'User activated successfully');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to activate user');
     } finally {
       setActionLoading(null);
     }
@@ -59,11 +59,11 @@ const UserManagementPage: React.FC = () => {
   const handleDeactivate = async (id: string) => {
     try {
       setActionLoading(`deactivate-${id}`);
-      await apiService().sendPostToServer('admin/users/deactivate', { id });
+      const response = await apiService().sendPostToServer('admin/users/deactivate', { id }) as { message?: string };
       setUsers(prev => prev.map(u => u.id === id ? { ...u, status: 'inactive' } : u));
-      toast.success('User deactivated successfully');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to deactivate user');
+      toast.success(response?.message || 'User deactivated successfully');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to deactivate user');
     } finally {
       setActionLoading(null);
     }

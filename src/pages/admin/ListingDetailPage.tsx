@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiService from '../../services/apiService';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface ListingDetail {
   id: string;
@@ -30,9 +31,11 @@ const ListingDetailPage: React.FC = () => {
           setListing(res.returnObject || res.data);
         } else {
           setListing(null);
+          toast.error(res?.message || 'Failed to load listing details');
         }
-      } catch (err) {
+      } catch (err: any) {
         setListing(null);
+        toast.error(err?.message || 'Failed to load listing details');
       } finally {
         setLoading(false);
       }
@@ -68,7 +71,8 @@ const ListingDetailPage: React.FC = () => {
         <button
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           onClick={async () => {
-            await apiService().sendPostToServer('admin/approveListing', { listingId: listing.id });
+            const res = await apiService().sendPostToServer('admin/approveListing', { listingId: listing.id }) as { message?: string };
+            toast.success(res?.message || 'Listing approved successfully');
             navigate('/admin/listing-approvals');
           }}
         >
@@ -77,7 +81,8 @@ const ListingDetailPage: React.FC = () => {
         <button
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           onClick={async () => {
-            await apiService().sendPostToServer('admin/rejectListing', { listingId: listing.id });
+            const res = await apiService().sendPostToServer('admin/rejectListing', { listingId: listing.id }) as { message?: string };
+            toast.success(res?.message || 'Listing rejected successfully');
             navigate('/admin/listing-approvals');
           }}
         >
